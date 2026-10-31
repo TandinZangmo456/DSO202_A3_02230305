@@ -1,0 +1,21 @@
+{{- /*
+configmap.yaml - every non-sensitive value. DB_HOST and BACKEND_URL are built
+from the Service names, so they always match the Services this release creates.
+*/}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "task-tracker.fullname" . }}-config
+  labels:
+    {{- include "task-tracker.commonLabels" . | nindent 4 }}
+data:
+  # Backend (application naming)
+  DB_HOST: {{ include "task-tracker.dbName" . | quote }}
+  DB_PORT: {{ .Values.config.dbPort | quote }}
+  DB_NAME: {{ .Values.config.dbName | quote }}
+  APP_PORT: {{ .Values.config.appPort | quote }}
+  CORS_ORIGIN: {{ .Values.config.corsOrigin | quote }}
+  # Database (official postgres image naming), same value as DB_NAME
+  POSTGRES_DB: {{ .Values.config.dbName | quote }}
+  # Frontend
+  BACKEND_URL: {{ printf "http://%s:%v" (include "task-tracker.backendName" .) .Values.backend.service.port | quote }}

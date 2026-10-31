@@ -1,0 +1,57 @@
+{{- $tier := dict "ctx" . "tier" "database" }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "task-tracker.dbName" . }}
+  labels:
+    {{- include "task-tracker.labels" $tier | nindent 4 }}
+spec:
+  replicas: 1                     # fixed: one ReadWriteOnce volume, one Pod
+  strategy:
+    type: Recreate                # the old Pod must release the volume first
+  selector:
+    matchLabels:
+      {{- include "task-tracker.selectorLabels" $tier | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "task-tracker.labels" $tier | nindent 8 }}
+      annotations:
+        # Changing the ConfigMap or Secret changes these hashes, so the
+        # Pod template changes and the Deployment rolls out.
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+    spec:
+      containers:
+        - name: postgres
+          image: {{ include "task-tracker.image" (dict "ctx" . "image" .Values.database.image) | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: postgres
+              containerPort: 5432
+          env:
+            # The official postgres image expects POSTGRES_*, not DB_*
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "task-tracker.fullname" . }}-config
+                  key: POSTGRES_DB
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "task-tracker.secretName" . }}
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "task-tracker.secretName" . }}
+                  key: POSTGRES_PASSWORD
+          resources:
+            {{- toYaml .Values.database.resources | nindent 12 }}
+          volumeMounts:
+            - name: db-data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: db-data
+          persistentVolumeClaim:
+            claimName: {{ include "task-tracker.dbName" . }}-data

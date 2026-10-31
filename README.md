@@ -337,4 +337,3 @@ Evidence goes in `evidence/kustomize/` and `evidence/helm/`.
 **Images.** In Assignment 1 the published images were linux/arm64 only, and they were built locally and loaded with `kind load docker-image`. If that is still needed, `imagePullPolicy: IfNotPresent` is set in both versions, so the loaded images are used.
 
 **NodePort sharing.** The Kustomize and Helm deployments cannot run at the same time because they use the same NodePorts, which is why section 8 removes one before installing the other.
-# DSO202_A3_02230305

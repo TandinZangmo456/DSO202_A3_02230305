@@ -1,0 +1,103 @@
+# values.yaml - default configuration of the task-tracker chart.
+# The defaults are the dev sizing. environments/prod.yaml overrides them.
+# Override with -f <file> or --set <key>=<value>.
+
+# Which environment this release is. No default on purpose: the chart
+# refuses to render until dev or prod is chosen.
+environment: ""
+
+# Shared by all three images. An empty tag means "use .Chart.AppVersion".
+image:
+  tag: ""
+  pullPolicy: IfNotPresent
+
+# Non-sensitive settings, rendered into the ConfigMap.
+# DB_HOST and BACKEND_URL are not listed here: the templates build them from
+# the Service names, so they can never point at the wrong Service.
+config:
+  dbName: tasktracker             # used for both DB_NAME and POSTGRES_DB
+  dbPort: 5432
+  appPort: 8080
+  corsOrigin: "*"
+
+# Database credentials. Leave user and password empty in Git and pass them
+# from an untracked file: -f environments/secrets.yaml
+# Or create the Secret yourself and give its name in existingSecret; it must
+# have the keys DB_USER, DB_PASSWORD, POSTGRES_USER and POSTGRES_PASSWORD.
+credentials:
+  existingSecret: ""
+  user: ""
+  password: ""
+
+database:
+  image:
+    repository: sarojsanyasi/dso202-db
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  persistence:
+    size: 1Gi
+    storageClass: standard        # kind's default provisioner
+
+backend:
+  image:
+    repository: sarojsanyasi/dso202-backend
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 250m
+      memory: 128Mi
+  service:
+    port: 8080                    # ClusterIP only; there is no setting to expose it
+
+frontend:
+  image:
+    repository: sarojsanyasi/dso202-frontend
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: 25m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 64Mi
+  service:
+    port: 8080
+    nodePort: 30080               # must be mapped in kind-config.yaml
+
+# ResourceQuota and LimitRange for the release namespace (Task 6 of A1).
+governance:
+  enabled: true
+  quota:
+    requests.cpu: "500m"
+    requests.memory: 1Gi
+    limits.cpu: "2"
+    limits.memory: 1536Mi
+    pods: "10"
+    persistentvolumeclaims: "2"
+    requests.storage: 2Gi
+    services.nodeports: "1"
+    services.loadbalancers: "0"
+  limitRange:
+    defaultRequest:
+      cpu: 50m
+      memory: 64Mi
+    default:
+      cpu: 200m
+      memory: 128Mi
+    min:
+      cpu: 10m
+      memory: 16Mi
+    max:
+      cpu: 500m
+      memory: 512Mi
+
+nameOverride: ""
+fullnameOverride: ""

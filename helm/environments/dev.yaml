@@ -1,0 +1,9 @@
+# environments/dev.yaml - the dev release. Most defaults in values.yaml are
+# already dev sizing, so this file stays short.
+environment: dev
+backend:
+  replicaCount: 1
+frontend:
+  replicaCount: 1
+  service:
+    nodePort: 30080

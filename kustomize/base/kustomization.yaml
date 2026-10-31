@@ -1,0 +1,46 @@
+# Base: everything the three tiers share in every environment.
+# Overlays in ../overlays/ import this and describe only what is different.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Compose
+resources:
+  - database/pvc.yaml
+  - database/deployment.yaml
+  - database/service.yaml
+  - backend/deployment.yaml
+  - backend/service.yaml
+  - frontend/deployment.yaml
+  - frontend/service.yaml
+
+# Transform: a common label on every object and Pod template.
+# includeSelectors is false so the immutable Deployment selectors are left alone.
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: task-tracker
+      app.kubernetes.io/managed-by: kustomize
+    includeSelectors: false
+    includeTemplates: true
+
+# The issued image tag, set in one place for all three tiers. Never "latest".
+images:
+  - name: sarojsanyasi/dso202-frontend
+    newTag: "1.0"
+  - name: sarojsanyasi/dso202-backend
+    newTag: "1.0"
+  - name: sarojsanyasi/dso202-db
+    newTag: "1.0"
+
+# Generate: the ConfigMap and Secret come from env files. Each gets a content
+# hash suffix, and Kustomize rewrites every reference to the hashed name, so a
+# change in config rolls the Deployments that use it.
+configMapGenerator:
+  - name: app-config
+    envs:
+      - app-config.env
+
+secretGenerator:
+  - name: app-secret
+    type: Opaque
+    envs:
+      - app-secret.env           # not in Git; copy app-secret.env.example

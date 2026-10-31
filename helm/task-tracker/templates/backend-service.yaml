@@ -1,0 +1,15 @@
+{{- $tier := dict "ctx" . "tier" "backend" }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "task-tracker.backendName" . }}
+  labels:
+    {{- include "task-tracker.labels" $tier | nindent 4 }}
+spec:
+  type: ClusterIP                 # fixed in the template; values cannot expose the backend
+  selector:
+    {{- include "task-tracker.selectorLabels" $tier | nindent 4 }}
+  ports:
+    - name: http
+      port: {{ .Values.backend.service.port }}
+      targetPort: http

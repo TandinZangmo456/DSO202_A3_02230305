@@ -1,0 +1,52 @@
+# Prod overlay: same base, more replicas, more resources, a bigger volume,
+# a restricted CORS origin and its own NodePort.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+  - namespace.yaml
+  - governance.yaml
+
+namespace: dso202-a3-prod
+
+labels:
+  - pairs:
+      app.kubernetes.io/environment: prod
+    includeSelectors: false
+    includeTemplates: true
+
+# The database stays at 1: a ReadWriteOnce volume serves one Pod.
+replicas:
+  - name: backend
+    count: 2
+  - name: frontend
+    count: 2
+
+# Merge one key into the base ConfigMap. The content changes, so the hash
+# changes, so both Deployments that read the ConfigMap get a new Pod template.
+configMapGenerator:
+  - name: app-config
+    behavior: merge
+    literals:
+      - CORS_ORIGIN=http://localhost:30081
+
+patches:
+  # strategic merge
+  - path: patch-backend-resources.yaml
+  - path: patch-db-resources.yaml
+  # JSON 6902 from a file, with an explicit target
+  - target:
+      version: v1
+      kind: Service
+      name: frontend-svc
+    path: patch-frontend-service.yaml
+  # JSON 6902 inline: a one-line change
+  - target:
+      version: v1
+      kind: PersistentVolumeClaim
+      name: db-pvc
+    patch: |-
+      - op: replace
+        path: /spec/resources/requests/storage
+        value: 2Gi

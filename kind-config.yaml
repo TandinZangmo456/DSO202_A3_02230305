@@ -1,0 +1,14 @@
+# kind cluster for Assignment 3.
+# 30080 is the dev frontend NodePort, 30081 is the prod frontend NodePort.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: dso202
+nodes:
+  - role: control-plane
+    extraPortMappings:
+      - containerPort: 30080
+        hostPort: 30080
+        protocol: TCP
+      - containerPort: 30081
+        hostPort: 30081
+        protocol: TCP

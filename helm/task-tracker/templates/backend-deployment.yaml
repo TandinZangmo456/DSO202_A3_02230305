@@ -1,0 +1,47 @@
+{{- $tier := dict "ctx" . "tier" "backend" }}
+{{- $config := printf "%s-config" (include "task-tracker.fullname" .) }}
+{{- $secret := include "task-tracker.secretName" . }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "task-tracker.backendName" . }}
+  labels:
+    {{- include "task-tracker.labels" $tier | nindent 4 }}
+spec:
+  replicas: {{ .Values.backend.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "task-tracker.selectorLabels" $tier | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "task-tracker.labels" $tier | nindent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+    spec:
+      containers:
+        - name: backend
+          image: {{ include "task-tracker.image" (dict "ctx" . "image" .Values.backend.image) | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.config.appPort }}
+          env:
+            # The backend uses DB_*, not POSTGRES_*
+            {{- range list "DB_HOST" "DB_PORT" "DB_NAME" "APP_PORT" "CORS_ORIGIN" }}
+            - name: {{ . }}
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ $config }}
+                  key: {{ . }}
+            {{- end }}
+            {{- range list "DB_USER" "DB_PASSWORD" }}
+            - name: {{ . }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secret }}
+                  key: {{ . }}
+            {{- end }}
+          resources:
+            {{- toYaml .Values.backend.resources | nindent 12 }}

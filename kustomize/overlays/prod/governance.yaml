@@ -1,0 +1,42 @@
+# Prod sizing: 2 backend, 2 frontend, 1 database, with raised resources.
+# Steady state requests: db 250m/512Mi + backend 2 x 100m/128Mi + frontend 2 x 25m/32Mi
+#                      = 500m CPU / 832Mi
+# Steady state limits:   db 1/1Gi + backend 2 x 500m/256Mi + frontend 2 x 100m/64Mi
+#                      = 2200m CPU / 1664Mi
+# A rolling update adds one surge Pod each for backend and frontend:
+#   peak requests 625m / 992Mi, peak limits 2800m / 1984Mi.
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: tier-quota
+spec:
+  hard:
+    requests.cpu: "1"
+    requests.memory: 2Gi
+    limits.cpu: "4"
+    limits.memory: 3Gi
+    pods: "12"
+    persistentvolumeclaims: "2"
+    requests.storage: 4Gi
+    services.nodeports: "1"
+    services.loadbalancers: "0"
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: container-limits
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 50m
+        memory: 64Mi
+      default:
+        cpu: 200m
+        memory: 128Mi
+      min:
+        cpu: 10m
+        memory: 16Mi
+      max:                        # the prod database limit is the largest
+        cpu: "1"
+        memory: 1Gi

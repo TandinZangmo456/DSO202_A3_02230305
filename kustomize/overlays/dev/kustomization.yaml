@@ -1,0 +1,22 @@
+# Dev overlay: the base as it is, in its own namespace, with dev governance.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+  - namespace.yaml
+  - governance.yaml
+
+namespace: dso202-a3-dev
+
+labels:
+  - pairs:
+      app.kubernetes.io/environment: dev
+    includeSelectors: false
+    includeTemplates: true
+
+replicas:
+  - name: backend
+    count: 1
+  - name: frontend
+    count: 1

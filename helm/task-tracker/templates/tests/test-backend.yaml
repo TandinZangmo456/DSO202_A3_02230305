@@ -1,0 +1,31 @@
+{{- /*
+tests/test-backend.yaml - run by "helm test". Calls the backend Service by name
+from inside the namespace and passes only if the backend reports that its
+database connection works, so it checks DNS, backend and database together.
+*/}}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ include "task-tracker.fullname" . }}-test-backend
+  labels:
+    {{- include "task-tracker.commonLabels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: test
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  restartPolicy: Never
+  containers:
+    - name: wget
+      image: busybox:1.37
+      command:
+        - sh
+        - -c
+        - |
+          wget -qO- http://{{ include "task-tracker.backendName" . }}:{{ .Values.backend.service.port }}/api/status | grep '"db":"connected"'
+      resources:
+        requests:
+          cpu: 10m
+          memory: 16Mi
+        limits:
+          cpu: 50m
+          memory: 32Mi

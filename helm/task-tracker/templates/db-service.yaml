@@ -1,0 +1,15 @@
+{{- $tier := dict "ctx" . "tier" "database" }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "task-tracker.dbName" . }}
+  labels:
+    {{- include "task-tracker.labels" $tier | nindent 4 }}
+spec:
+  clusterIP: None                 # headless; no setting can expose the database
+  selector:
+    {{- include "task-tracker.selectorLabels" $tier | nindent 4 }}
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: postgres

@@ -1,0 +1,28 @@
+{{- /*
+governance.yaml - ResourceQuota and LimitRange for the release namespace.
+Helm creates these before the Deployments (it orders objects by kind).
+*/}}
+{{- if .Values.governance.enabled }}
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: {{ include "task-tracker.fullname" . }}-quota
+  labels:
+    {{- include "task-tracker.commonLabels" . | nindent 4 }}
+spec:
+  hard:
+    {{- range $k, $v := .Values.governance.quota }}
+    {{ $k }}: {{ $v | quote }}
+    {{- end }}
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: {{ include "task-tracker.fullname" . }}-limits
+  labels:
+    {{- include "task-tracker.commonLabels" . | nindent 4 }}
+spec:
+  limits:
+    - type: Container
+      {{- toYaml .Values.governance.limitRange | nindent 6 }}
+{{- end }}

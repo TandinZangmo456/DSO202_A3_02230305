@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db
+  labels:
+    app.kubernetes.io/name: db
+    tier: database
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate                # a ReadWriteOnce volume cannot be shared by two Pods during a rollout
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: db
+      tier: database
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: db
+        tier: database
+    spec:
+      containers:
+        - name: postgres
+          image: sarojsanyasi/dso202-db   # tag is set once, in kustomization.yaml (images:)
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: postgres
+              containerPort: 5432
+          env:
+            # The official postgres image expects POSTGRES_*, not DB_*
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config        # Kustomize rewrites this to the hashed name
+                  key: POSTGRES_DB
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: app-secret
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secret
+                  key: POSTGRES_PASSWORD
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          volumeMounts:
+            - name: db-data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: db-data
+          persistentVolumeClaim:
+            claimName: db-pvc

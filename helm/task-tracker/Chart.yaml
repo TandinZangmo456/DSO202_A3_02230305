@@ -1,0 +1,14 @@
+# Chart.yaml - identity and metadata of the task-tracker chart.
+apiVersion: v2                    # chart format for Helm 3 and Helm 4
+name: task-tracker                # must match the directory name
+description: Three-tier Task Tracker (nginx frontend, REST backend, PostgreSQL) for DSO202
+type: application
+version: 0.1.0                    # version of the CHART; bump on any chart change
+appVersion: "1.0"                 # the issued image tag; quoted so YAML keeps it a string
+kubeVersion: ">=1.30.0-0"
+keywords:
+  - dso202
+  - task-tracker
+  - postgresql
+maintainers:
+  - name: Tandin Zangmo

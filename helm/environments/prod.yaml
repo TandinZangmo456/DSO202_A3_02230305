@@ -1,0 +1,52 @@
+# environments/prod.yaml - the prod release. Sets every key prod cares about,
+# so it never depends on another environment file (values files are not
+# layered; each environment is installed with its own file only).
+environment: prod
+
+config:
+  corsOrigin: "http://localhost:30081"   # restricted origin in prod
+
+database:
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+  persistence:
+    size: 2Gi
+
+backend:
+  replicaCount: 2
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+frontend:
+  replicaCount: 2
+  service:
+    nodePort: 30081
+
+governance:
+  enabled: true
+  # Steady state requests 500m / 832Mi, limits 2200m / 1664Mi.
+  # Peak during a rolling update: requests 625m / 992Mi, limits 2800m / 1984Mi.
+  quota:
+    requests.cpu: "1"
+    requests.memory: 2Gi
+    limits.cpu: "4"
+    limits.memory: 3Gi
+    pods: "12"
+    persistentvolumeclaims: "2"
+    requests.storage: 4Gi
+    services.nodeports: "1"
+    services.loadbalancers: "0"
+  limitRange:
+    max:
+      cpu: "1"
+      memory: 1Gi

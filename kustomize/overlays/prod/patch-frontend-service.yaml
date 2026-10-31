@@ -1,0 +1,12 @@
+# JSON 6902 patch: exact paths. The nodePort lives inside a list, so a path
+# with an index is the most precise way to change it.
+- op: replace
+  path: /spec/ports/0/nodePort
+  value: 30081
+# "/" inside an annotation key is written as ~1 in a JSON pointer.
+- op: add
+  path: /metadata/annotations
+  value: {}
+- op: add
+  path: /metadata/annotations/dso202.cst.edu.bt~1exposure
+  value: public-frontend-only

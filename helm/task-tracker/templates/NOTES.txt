@@ -1,0 +1,13 @@
+Task Tracker release {{ .Release.Name }} (revision {{ .Release.Revision }}) in namespace {{ .Release.Namespace }}.
+Environment: {{ include "task-tracker.environment" . }}
+Backend replicas: {{ .Values.backend.replicaCount }}, frontend replicas: {{ .Values.frontend.replicaCount }}, database: 1
+
+Frontend (NodePort, needs the kind port mapping):
+  http://localhost:{{ .Values.frontend.service.nodePort }}
+
+The backend is ClusterIP only. To call the API from your machine:
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "task-tracker.backendName" . }} 8080:{{ .Values.backend.service.port }}
+  curl http://localhost:8080/api/status
+
+Check the whole chain from inside the cluster:
+  helm test {{ .Release.Name }} -n {{ .Release.Namespace }}

@@ -1,0 +1,5 @@
+# Real credentials never go to Git. Copy the *.example files and fill them in.
+kustomize/base/app-secret.env
+helm/environments/secrets.yaml
+# packaged charts
+*.tgz

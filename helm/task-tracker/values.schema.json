@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "task-tracker values",
+  "type": "object",
+  "required": ["environment", "image", "config", "credentials", "database", "backend", "frontend", "governance"],
+  "properties": {
+    "environment": { "enum": ["", "dev", "prod"] },
+    "image": {
+      "type": "object",
+      "required": ["tag", "pullPolicy"],
+      "properties": {
+        "tag": { "type": "string", "not": { "const": "latest" } },
+        "pullPolicy": { "enum": ["Always", "IfNotPresent", "Never"] }
+      }
+    },
+    "config": {
+      "type": "object",
+      "required": ["dbName", "dbPort", "appPort", "corsOrigin"],
+      "properties": {
+        "dbName": { "type": "string", "minLength": 1 },
+        "dbPort": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "appPort": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "corsOrigin": { "type": "string", "minLength": 1 }
+      }
+    },
+    "credentials": {
+      "type": "object",
+      "properties": {
+        "existingSecret": { "type": "string" },
+        "user": { "type": "string" },
+        "password": { "type": "string" }
+      }
+    },
+    "database": {
+      "type": "object",
+      "required": ["image", "resources", "persistence"],
+      "properties": {
+        "image": { "$ref": "#/$defs/image" },
+        "resources": { "$ref": "#/$defs/resources" },
+        "persistence": {
+          "type": "object",
+          "required": ["size"],
+          "properties": {
+            "size": { "type": "string", "pattern": "^[0-9]+(Mi|Gi)$" },
+            "storageClass": { "type": "string" }
+          }
+        }
+      }
+    },
+    "backend": {
+      "type": "object",
+      "required": ["image", "replicaCount", "resources", "service"],
+      "properties": {
+        "image": { "$ref": "#/$defs/image" },
+        "replicaCount": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "resources": { "$ref": "#/$defs/resources" },
+        "service": {
+          "type": "object",
+          "required": ["port"],
+          "additionalProperties": false,
+          "properties": { "port": { "type": "integer", "minimum": 1, "maximum": 65535 } }
+        }
+      }
+    },
+    "frontend": {
+      "type": "object",
+      "required": ["image", "replicaCount", "resources", "service"],
+      "properties": {
+        "image": { "$ref": "#/$defs/image" },
+        "replicaCount": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "resources": { "$ref": "#/$defs/resources" },
+        "service": {
+          "type": "object",
+          "required": ["port", "nodePort"],
+          "properties": {
+            "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+            "nodePort": { "type": "integer", "minimum": 30000, "maximum": 32767 }
+          }
+        }
+      }
+    },
+    "governance": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "quota": { "type": "object" },
+        "limitRange": { "type": "object" }
+      }
+    },
+    "nameOverride": { "type": "string" },
+    "fullnameOverride": { "type": "string" }
+  },
+  "$defs": {
+    "image": {
+      "type": "object",
+      "required": ["repository"],
+      "properties": {
+        "repository": { "type": "string", "minLength": 1 },
+        "tag": { "type": "string", "not": { "const": "latest" } }
+      }
+    },
+    "resources": {
+      "type": "object",
+      "required": ["requests", "limits"],
+      "properties": {
+        "requests": { "type": "object", "required": ["cpu", "memory"] },
+        "limits": { "type": "object", "required": ["cpu", "memory"] }
+      }
+    }
+  }
+}

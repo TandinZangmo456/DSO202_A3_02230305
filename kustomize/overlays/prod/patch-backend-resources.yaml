@@ -1,0 +1,18 @@
+# Strategic merge patch: reads like the Deployment it changes.
+# The container is matched by name, so only its resources change.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+spec:
+  template:
+    spec:
+      containers:
+        - name: backend
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
